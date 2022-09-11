@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include"bootloader.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -35,14 +35,14 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define CMD_BUF_SIZE 200
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart5;
 
 /* USER CODE BEGIN PV */
-
+uint8_t cmdBuf[CMD_BUF_SIZE];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -88,8 +88,13 @@ int main(void)
   MX_GPIO_Init();
   MX_UART5_Init();
   /* USER CODE BEGIN 2 */
-  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)==SET){
-	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, SET);
+
+  /*Enter Bootloader mode when User_button is pressed*/
+  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET){
+	  bootloader_mode();
+  }
+  else{
+	  bootloader_jump_to_user_code(&huart5);
   }
   /* USER CODE END 2 */
 
@@ -195,7 +200,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PA0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
@@ -203,8 +208,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PD12 */
-  GPIO_InitStruct.Pin = GPIO_PIN_12;
+  /*Configure GPIO pins : PD12 PD13 PD14 PD15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -213,6 +218,34 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void bootloader_mode(){
+
+	/*Use UART5 for bootloader command*/
+	HAL_UART_Transmit(&huart5,(uint8_t*) "Welcome to bootloader\r\n", strlen("Welcome to bootloder\r\n"),HAL_MAX_DELAY );
+
+	/*poll UART5 to read data*/
+	while(1)
+	{
+		/*Receive command from host*/
+		HAL_UART_Receive(&huart5, cmdBuf, CMD_SIZE, HAL_MAX_DELAY);
+
+		//break through cmd
+		switch(cmdBuf[0])
+		{
+		case BL_GET_VERSION:
+			bootloader_get_version(&huart5);
+			break;
+		case BL_JMP_TO_USER_CODE:
+			bootloader_jump_to_user_code(&huart5);
+			break;
+		case BL_WRITE_BIN_TO_MEMORY:
+			bootloader_write_bin_to_memory(&huart5);
+			break;
+		default:
+			HAL_UART_Transmit(&huart5, "Invalid cmd", strlen("Invalid cmd"), HAL_MAX_DELAY);
+		}
+	}
+}
 
 /* USER CODE END 4 */
 
