@@ -1,3 +1,4 @@
 ../Core/Src/bootloader.c:10:6:bootloader_jump_to_user_code	32	static,ignoring_inline_asm
-../Core/Src/bootloader.c:27:6:bootloader_get_version	16	static
-../Core/Src/bootloader.c:31:6:bootloader_write_bin_to_memory	16	static
+../Core/Src/bootloader.c:28:6:bootloader_get_version	16	static
+../Core/Src/bootloader.c:32:6:bootloader_write_bin_to_memory	24	static
+../Core/Src/bootloader.c:40:6:bootloader_read_memory	16	static

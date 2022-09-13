@@ -31,7 +31,11 @@ void bootloader_get_version(UART_HandleTypeDef*BL_UART)
 }
 void bootloader_write_bin_to_memory(UART_HandleTypeDef *BL_UART)
 {
-
+//	HAL_UART_Transmit(huart5, "Writing", strlen("Writing"), HAL_MAX_DELAY);
+//	uint32_t address=0x0800C000 ;
+//	HAL_FLASH_Unlock();
+//	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, 0x22222222);
+//	HAL_FLASH_Lock();
 }
 void bootloader_read_memory(UART_HandleTypeDef*BL_UART){
 

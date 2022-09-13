@@ -33,5 +33,7 @@ void bootloader_jump_to_user_code(UART_HandleTypeDef*);
 void bootloader_get_version(UART_HandleTypeDef*);
 void bootloader_write_bin_to_memory(UART_HandleTypeDef*);
 void bootloader_read_memory(UART_HandleTypeDef*);
+void bootloader_flash_erase(UART_HandleTypeDef*);
+void bootloader_flash_varify(UART_HandleTypeDef*);
 
 #endif /* INC_BOOTLOADER_H_ */
