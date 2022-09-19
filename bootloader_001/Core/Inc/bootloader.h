@@ -10,7 +10,15 @@
 
 #include "stm32f4xx_hal.h"
 
+typedef enum {
+	BL_OK,
+	BL_ERROR
+}BL_StatusTypedef;
+
+
 //macros
+#define FLASH_DOWNLOAD_AREA 0x08008000U
+
 #define BL_UART huart5
 #define BL_VERSION "1.0"
 #define CMD_SIZE 1
@@ -29,11 +37,13 @@
 void bootloader_mode(void);
 
 //bootloader command functions
-void bootloader_jump_to_user_code(UART_HandleTypeDef*);
-void bootloader_get_version(UART_HandleTypeDef*);
-void bootloader_write_bin_to_memory(UART_HandleTypeDef*);
-void bootloader_read_memory(UART_HandleTypeDef*);
-void bootloader_flash_erase(UART_HandleTypeDef*);
-void bootloader_flash_varify(UART_HandleTypeDef*);
+BL_StatusTypedef bootloader_jump_to_user_code(UART_HandleTypeDef*);
+BL_StatusTypedef bootloader_get_version(UART_HandleTypeDef*);
+BL_StatusTypedef bootloader_write_bin_to_memory(uint8_t *,int );
+BL_StatusTypedef bootloader_read_memory(UART_HandleTypeDef*);
+BL_StatusTypedef bootloader_flash_erase_all(UART_HandleTypeDef*);
+BL_StatusTypedef bootloader_flash_erase_download_area();
+BL_StatusTypedef bootloader_flash_varify(UART_HandleTypeDef*);
+
 
 #endif /* INC_BOOTLOADER_H_ */

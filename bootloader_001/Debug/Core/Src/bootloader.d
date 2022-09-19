@@ -25,7 +25,7 @@ Core/Src/bootloader.o: ../Core/Src/bootloader.c ../Core/Inc/bootloader.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
- ../Core/Inc/main.h
+ ../Core/Inc/main.h ../Core/Inc/xmodem.h
 ../Core/Inc/bootloader.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
@@ -54,3 +54,4 @@ Core/Src/bootloader.o: ../Core/Src/bootloader.c ../Core/Inc/bootloader.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
 ../Core/Inc/main.h:
+../Core/Inc/xmodem.h:

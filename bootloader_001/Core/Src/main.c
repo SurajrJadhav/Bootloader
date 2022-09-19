@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include"bootloader.h"
+#include"xmodem.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,6 +44,8 @@ UART_HandleTypeDef huart5;
 
 /* USER CODE BEGIN PV */
 uint8_t cmdBuf[CMD_BUF_SIZE];
+unsigned char __attribute__((section(".mysection"))) my_buf[128];
+unsigned char __attribute__((section(".appsection"))) app_buf[260000];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -71,7 +74,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -239,10 +242,16 @@ void bootloader_mode(){
 			bootloader_jump_to_user_code(&huart5);
 			break;
 		case BL_WRITE_BIN_TO_MEMORY:
-			bootloader_write_bin_to_memory(&huart5);
+			bootloader_flash_erase_download_area();
+			while(1){
+				if(xmodem_receive(&huart5)==XMODEM_ERROR){
+					HAL_UART_Transmit(&huart5, "ERROR", strlen("ERROR"), HAL_MAX_DELAY);
+					while(1);
+				}
+			}
 			break;
 		default:
-			HAL_UART_Transmit(&huart5, "Invalid cmd", strlen("Invalid cmd"), HAL_MAX_DELAY);
+			HAL_UART_Transmit(&huart5, "Invalid cmd\n\r", strlen("Invalid cmd\n\r"), HAL_MAX_DELAY);
 		}
 	}
 }

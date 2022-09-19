@@ -2,12 +2,13 @@
  * bootloader.c
  *
  *  Created on: Sep 11, 2022
- *      Author: suraj
+ *      Author: Suraj
  */
 #include "bootloader.h"
 #include "main.h"
+#include "xmodem.h"
 
-void bootloader_jump_to_user_code(UART_HandleTypeDef*BL_UART){
+BL_StatusTypedef bootloader_jump_to_user_code(UART_HandleTypeDef*BL_UART){
 
 	//set msp
 	uint32_t msp_value=*(uint32_t*)USER_CODE_SECTION_ADDRESS;
@@ -21,22 +22,44 @@ void bootloader_jump_to_user_code(UART_HandleTypeDef*BL_UART){
 
 	reset_handler=(void(*)(void))(*(uint32_t *)RESET_HANDLER_ADDRESS);
 	reset_handler();
+
+	return BL_ERROR;
 }
 
 /*********Bootloader Command Functions*****************************/
 
-void bootloader_get_version(UART_HandleTypeDef*BL_UART)
+BL_StatusTypedef bootloader_get_version(UART_HandleTypeDef*BL_UART)
 {
 
 }
-void bootloader_write_bin_to_memory(UART_HandleTypeDef *BL_UART)
+
+BL_StatusTypedef bootloader_write_bin_to_memory(uint8_t *rxbuf ,int size)
 {
-//	HAL_UART_Transmit(huart5, "Writing", strlen("Writing"), HAL_MAX_DELAY);
-//	uint32_t address=0x0800C000 ;
-//	HAL_FLASH_Unlock();
-//	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, 0x22222222);
-//	HAL_FLASH_Lock();
+	static uint32_t address=FLASH_DOWNLOAD_AREA;
+
+	HAL_FLASH_Unlock();
+	int i=0;
+	while(i < size){
+
+		if(HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE,address++, *(rxbuf+i)) == HAL_OK ){
+			i++;
+		}
+		else{
+			return BL_ERROR;
+		}
+	}
+	HAL_FLASH_Lock();
+	return BL_OK;
 }
-void bootloader_read_memory(UART_HandleTypeDef*BL_UART){
+BL_StatusTypedef bootloader_flash_erase_download_area(){
+	HAL_FLASH_Unlock();
+	FLASH_Erase_Sector(FLASH_SECTOR_2, FLASH_VOLTAGE_RANGE_3);
+	HAL_FLASH_Lock();
+	return BL_OK;
+}
+
+BL_StatusTypedef bootloader_read_memory(UART_HandleTypeDef*BL_UART){
 
 }
+
+
