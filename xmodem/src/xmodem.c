@@ -9,12 +9,6 @@
 
 int serial_port;
 
-void xmodem_wait_for_send(){
-	unsigned char rx=0;
-	while(rx!=NAK)
-		read(serial_port,&rx,1);
-}
-
 /*
  * 		Packet Info
 *      +-----+-------+-------+------+-----+------+
@@ -37,8 +31,6 @@ void xmodem_send_packet(){
 	int EOT_Flag,i,j,packet_num=0;
 	__uint16_t size;
 	do{
-//		xmodem_wait_for_send();
-
 		/*start txn*/
 		size=PKT_SIZE_1K;
 		rxbuf[0]=STX;
