@@ -10,7 +10,10 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <fcntl.h>
+#include <fcntl.h> // Contains file controls like O_RDWR
+#include <errno.h> // Error integer and strerror() function
+#include <termios.h> // Contains POSIX terminal control definitions
+#include <unistd.h> // write(), read(), close()
 
 
 #define SOH		0x01
@@ -24,7 +27,7 @@
 #define PKT_SIZE_1K 	1024
 
 
-
+__uint8_t xmodem_calcrc(unsigned char *ptr, int count);
 /*function declaration*/
 void xmodem_wait_for_send();
 void xmodem_send_packet();

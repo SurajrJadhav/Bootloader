@@ -9,6 +9,7 @@
 
 int serial_port;
 
+
 /*
  * 		Packet Info
 *      +-----+-------+-------+------+-----+------+
@@ -16,6 +17,29 @@ int serial_port;
 *      +-----+-------+-------+------+-----+------+
 *      	  1		 1			 2		  x		  1
 */
+__uint8_t xmodem_calcrc(unsigned char *ptr, int count)
+{
+	__uint8_t  crc;
+    char i;
+
+    crc = 0;
+    while (--count >= 0)
+    {
+        crc = crc ^ (*ptr);
+        ptr++;
+        i = 8;
+        do
+        {
+            if (crc & 0x80)
+                crc = crc << 1 ^ 0x97;
+            else
+                crc = crc << 1;
+        } while(--i);
+    }
+    return crc;
+}
+
+
 
 void xmodem_send_packet(){
 	int fd = open("/home/suraj/STM_CubeIDE_Workspace/user_test/Debug/user_test.bin",O_RDWR);
@@ -24,7 +48,7 @@ void xmodem_send_packet(){
 		perror("open");
 	}
 
-	__uint8_t rxbuf[6000]={0};
+	__uint8_t rxbuf[1050]={0},response;
 
 	/*write 1 to send signal of data read*/
 	write(serial_port,"1",O_RDWR);
@@ -57,14 +81,31 @@ void xmodem_send_packet(){
 		write(serial_port,rxbuf+1,1);
 		//send size
 		write(serial_port,rxbuf+2,2);
+
+		//crc addition
+		__uint8_t crc=xmodem_calcrc(rxbuf+4, size);
+		rxbuf[size+4]=crc;
+
 		/*debug*/
-		for(int k=0;k<size+4;k++){
+		for(int k=0;k<size+5;k++){
 			printf("0x%.2x ",rxbuf[k]);
 		}
 		printf("\n");
 
 		//send data
 		write(serial_port,rxbuf+4,size);
+		//send crc
+		write(serial_port,&crc,1);
+		//read ack
+		read(serial_port,&response,1);
+		if(response!=ACK){
+			printf("NAK received!!!\n");
+			return;
+		}
+		else
+		{
+			printf("ACK received = %p!!!\n",response);
+		}
 
 	}while(EOT_Flag==0);
 
@@ -79,23 +120,3 @@ void xmodem_send_packet(){
 }
 
 
-int calcrc(char *ptr, int count)
-{
-    int  crc;
-    char i;
-
-    crc = 0;
-    while (--count >= 0)
-    {
-        crc = crc ^ (int) *ptr++ << 8;
-        i = 8;
-        do
-        {
-            if (crc & 0x8000)
-                crc = crc << 1 ^ 0x1021;
-            else
-                crc = crc << 1;
-        } while(--i);
-    }
-    return (crc);
-}

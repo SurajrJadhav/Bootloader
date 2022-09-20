@@ -16,10 +16,33 @@
 *      +-----+-------+-------+------+-----+------+
 */
 
+uint8_t xmodem_calcrc(uint8_t *ptr, int count)
+{
+	uint8_t  crc;
+    char i;
+
+    crc = 0;
+    while (--count >= 0)
+    {
+        crc = crc ^ *ptr++;
+        i = 8;
+        do
+        {
+            if (crc & 0x80)
+                crc = crc << 1 ^ 0x97;
+            else
+                crc = crc << 1;
+        } while(--i);
+    }
+    return crc;
+}
+
+
+
 XMODEM_StatusTypedef xmodem_receive(UART_HandleTypeDef *BL_UART){
 
 	uint8_t rxbuf[1050]={0};
-	uint8_t header,packet_number=0,size[2];
+	uint8_t header,packet_number=0,size[2],received_crc,response;
 	uint16_t actual_size;
 
 	/*Receive & Check Header**/
@@ -37,9 +60,24 @@ XMODEM_StatusTypedef xmodem_receive(UART_HandleTypeDef *BL_UART){
 		 	 actual_size=*(uint16_t*)size;
 		 	 /*receive DATA*/
 		 	 HAL_UART_Receive(BL_UART, rxbuf, actual_size, HAL_MAX_DELAY);
+		 	 /*receive CRC*/
+		 	 HAL_UART_Receive(huart5, &received_crc, 1, HAL_MAX_DELAY);
 
+		 	uint8_t calculated_crc = xmodem_calcrc(rxbuf, actual_size);
+		 	 if(calculated_crc != received_crc){
+		 		 //send NAK
+		 		 response=NAK;
+		 		 HAL_UART_Transmit(huart5, &response, 1, HAL_MAX_DELAY);
+		 		 return XMODEM_ERROR;
+		 	 }
+		 	 else
+		 	 {
+		 		//send NAK
+		 		response=ACK;
+		 		HAL_UART_Transmit(huart5, &response, 1, HAL_MAX_DELAY);
+		 	 }
 		 	 /*flash memory*/
-		 	bootloader_write_bin_to_memory(rxbuf,actual_size);
+		 	 bootloader_write_bin_to_memory(rxbuf,actual_size);
 
 #ifdef DEBUG_XMODEM
 		 	/*debug*/
@@ -61,5 +99,5 @@ XMODEM_StatusTypedef xmodem_receive(UART_HandleTypeDef *BL_UART){
 		 }
 
 	 }
-
 }
+

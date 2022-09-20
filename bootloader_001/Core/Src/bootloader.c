@@ -38,6 +38,7 @@ BL_StatusTypedef bootloader_write_bin_to_memory(uint8_t *rxbuf ,int size)
 	static uint32_t address=FLASH_DOWNLOAD_AREA;
 
 	HAL_FLASH_Unlock();
+
 	int i=0;
 	while(i < size){
 
@@ -48,6 +49,7 @@ BL_StatusTypedef bootloader_write_bin_to_memory(uint8_t *rxbuf ,int size)
 			return BL_ERROR;
 		}
 	}
+
 	HAL_FLASH_Lock();
 	return BL_OK;
 }

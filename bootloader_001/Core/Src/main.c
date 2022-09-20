@@ -223,6 +223,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void bootloader_mode(){
 
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, SET);
 	/*Use UART5 for bootloader command*/
 	HAL_UART_Transmit(&huart5,(uint8_t*) "Welcome to bootloader\r\n", strlen("Welcome to bootloder\r\n"),HAL_MAX_DELAY );
 
