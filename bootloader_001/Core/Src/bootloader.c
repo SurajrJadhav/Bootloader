@@ -164,7 +164,6 @@ BL_StatusTypedef bootloader_update_signature_reset_flag(UART_HandleTypeDef*BL_UA
 	bl_sig_t temp;
 	memcpy(&temp,FLASH_SIGNATURE_AREA,sizeof(bl_sig_t));
 	temp.update_flag=0;
-
 	/*update signature*/
 	bootloader_signature_update(&temp);
 
@@ -240,13 +239,11 @@ BL_StatusTypedef  bootloader_signature_update(bl_sig_t *sigdata){
 
 	uint32_t address=FLASH_SIGNATURE_AREA;
 	uint8_t *data = (uint8_t*)sigdata;
+	/*erase sector to update*/
+	bootloader_flash_erase_signature_area();
 
-	while(*data != 0xff)
-	{
-		if(HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, address++, *data++)==HAL_ERROR){
-			return BL_ERROR;
-		}
-	}
+	/*copy content to signature area*/
+	memcpy(FLASH_SIGNATURE_AREA,sigdata,sizeof(bl_sig_t));
 
 	/*LOCK flash operation*/
 	bootloader_lock_flash();

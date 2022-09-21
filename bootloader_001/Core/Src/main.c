@@ -67,7 +67,7 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
-  /* USER CODE END 1 */
+	/* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -235,7 +235,7 @@ void bootloader_mode(){
 		switch(cmdBuf[0])
 		{
 		case BL_GET_VERSION:
-			bootloader_get_version(&huart5);
+			bootloader_get_bl_version(&huart5);
 			break;
 		case BL_JMP_TO_USER_CODE:
 			bootloader_jump_to_user_code(&huart5);
