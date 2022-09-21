@@ -38,14 +38,12 @@
 /* USER CODE BEGIN PM */
 #define CMD_BUF_SIZE 200
 /* USER CODE END PM */
-
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart5;
 
 /* USER CODE BEGIN PV */
 uint8_t cmdBuf[CMD_BUF_SIZE];
-unsigned char __attribute__((section(".mysection"))) my_buf[128];
-unsigned char __attribute__((section(".appsection"))) app_buf[260000];
+//bl_sig_t __attribute__((section(".sigsection"))) signature;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/

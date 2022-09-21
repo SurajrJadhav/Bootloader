@@ -31,5 +31,5 @@ typedef enum{
 /*API used for xmodem*/
 XMODEM_StatusTypedef xmodem_receive(UART_HandleTypeDef *BL_UART);
 __uint8_t xmodem_calcrc(uint8_t *ptr, int count);
-
+uint8_t xmodem_ready_to_receive();
 #endif /* INC_XMODEM_H_ */

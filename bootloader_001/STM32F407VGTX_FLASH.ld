@@ -47,7 +47,7 @@ MEMORY
 {
   CCMRAM    (xrw)    : ORIGIN = 0x10000000,   LENGTH = 64K
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 128K
-  FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 768K
+  FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 48K
 }
 /*Add this in above memory*/
 /*APP_MEMORY(rx)   : ORIGIN = 0x08040000,  LENGTH = 256K */
@@ -64,20 +64,12 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
-	/*test block in RAM*/
-	.myblock 0x20000100 (NOLOAD):
+	/*test block in FLASH*/
+	.sigblock 0x0800C000 (NOLOAD):
 	{
-		KEEP(*(.mysection))
-	} > RAM
-	
-	/*APP_SECTION
-	.appsection :
-	{
-		. = ALIGN(4);
-		KEEP(*(.appsection*))
-		
-	} > APP_MEMORY
-	*/
+		KEEP(*(.sigsection))
+	} > FLASH
+
 
   /* The program code and other data into "FLASH" Rom type memory */
   .text :

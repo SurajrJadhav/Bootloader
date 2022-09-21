@@ -9,6 +9,7 @@
 #define INC_BOOTLOADER_H_
 
 #include "stm32f4xx_hal.h"
+#include "bootloader.h"
 
 typedef enum {
 	BL_OK,
@@ -16,9 +17,19 @@ typedef enum {
 }BL_StatusTypedef;
 
 
-//macros
-#define FLASH_DOWNLOAD_AREA 0x08008000U
+typedef struct bl_signature{
+	float bl_version;
+	float app_version;
+	int update_flag;	//1 if update available : 0 if not
+	struct {
+		uint8_t day;
+		uint8_t month;
+		uint16_t year;
+	}time_stamp;
+}bl_sig_t;
 
+
+//macros
 #define BL_UART huart5
 #define BL_VERSION "1.0"
 #define CMD_SIZE 1
@@ -30,20 +41,40 @@ typedef enum {
 
 
 /*user code section*/
-#define USER_CODE_SECTION_ADDRESS 0x08008000U
-#define RESET_HANDLER_ADDRESS 0x08008004U
+#define FLASH_APPLICATION_AREA 0x08010000U
+#define RESET_HANDLER_ADDRESS 0x08010004U
 
+//download area
+#define FLASH_DOWNLOAD_AREA 0x08080000U
+#define FLASH_SIGNATURE_AREA 0x0800C000U
 //function prototypes
 void bootloader_mode(void);
 
 //bootloader command functions
 BL_StatusTypedef bootloader_jump_to_user_code(UART_HandleTypeDef*);
-BL_StatusTypedef bootloader_get_version(UART_HandleTypeDef*);
+BL_StatusTypedef bootloader_get_bl_version(UART_HandleTypeDef*);
 BL_StatusTypedef bootloader_write_bin_to_memory(uint8_t *,int );
-BL_StatusTypedef bootloader_read_memory(UART_HandleTypeDef*);
+BL_StatusTypedef bootloader_read_memory_sector(UART_HandleTypeDef*);
+
 BL_StatusTypedef bootloader_flash_erase_all(UART_HandleTypeDef*);
 BL_StatusTypedef bootloader_flash_erase_download_area();
+BL_StatusTypedef bootloader_flash_erase_application_area();
+BL_StatusTypedef bootloader_flash_erase_signature_area();
 BL_StatusTypedef bootloader_flash_varify(UART_HandleTypeDef*);
+
+BL_StatusTypedef bootloader_app_update(UART_HandleTypeDef*);
+
+BL_StatusTypedef bootloader_update_signature_set_flag(UART_HandleTypeDef*BL_UART);
+BL_StatusTypedef bootloader_update_signature_reset_flag(UART_HandleTypeDef*BL_UART);
+BL_StatusTypedef bootloader_update_signature_app_version(UART_HandleTypeDef*BL_UART);
+BL_StatusTypedef bootloader_update_signature_bl_version(UART_HandleTypeDef*BL_UART);
+BL_StatusTypedef bootloader_signature_update(bl_sig_t *sigdata);
+int bootloader_signature_get_reset_flag(UART_HandleTypeDef*BL_UART);
+float bootloader_signature_get_app_version(UART_HandleTypeDef*BL_UART);
+float bootloader_signature_get_bl_version(UART_HandleTypeDef*BL_UART);
+
+BL_StatusTypedef bootloader_unlock_flash();
+BL_StatusTypedef bootloader_lock_flash();
 
 
 #endif /* INC_BOOTLOADER_H_ */

@@ -39,13 +39,20 @@ __uint8_t xmodem_calcrc(unsigned char *ptr, int count)
     return crc;
 }
 
+void xmodem_wait_for_send(){
+	unsigned char ch=0;
+	while(ch!=NAK)
+	{
+		read(serial_port,&ch,1);
+	}
 
+}
 
 void xmodem_send_packet(){
 	int fd = open("/home/suraj/STM_CubeIDE_Workspace/user_test/Debug/user_test.bin",O_RDWR);
 	if(fd<=0)
-	{
 		perror("open");
+	{
 	}
 
 	__uint8_t rxbuf[1050]={0},response;
@@ -74,7 +81,11 @@ void xmodem_send_packet(){
 		rxbuf[2]=(size & (0x00ff));
 		rxbuf[3]=((size & (0xff00))>>8);
 		printf("size = %d\n",*(__uint16_t*)&rxbuf[2]);
-		sleep(1);
+
+		if(packet_num==1)
+			xmodem_wait_for_send();
+		else
+			sleep(1);
 		//send header
 		write(serial_port,rxbuf,1);
 		//send packet number

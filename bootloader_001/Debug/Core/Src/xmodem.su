@@ -1,2 +1,3 @@
 ../Core/Src/xmodem.c:19:9:xmodem_calcrc	24	static
-../Core/Src/xmodem.c:42:22:xmodem_receive	1096	static
+../Core/Src/xmodem.c:40:9:xmodem_ready_to_receive	24	static
+../Core/Src/xmodem.c:51:22:xmodem_receive	1096	static

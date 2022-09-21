@@ -33,7 +33,7 @@ void command_menu(){
 int main() {
 
 
-	serial_port = open("/dev/ttyUSB2", O_RDWR);
+	serial_port = open("/dev/ttyUSB1", O_RDWR);
 	  // Create new termios struct, we call it 'tty' for convention
 	struct termios tty;
 

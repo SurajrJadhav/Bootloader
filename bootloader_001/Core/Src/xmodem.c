@@ -37,16 +37,27 @@ uint8_t xmodem_calcrc(uint8_t *ptr, int count)
     return crc;
 }
 
+uint8_t xmodem_ready_to_receive(UART_HandleTypeDef *BL_UART){
+	uint8_t header=0,response=NAK;
+	while(header!=STX){
+		HAL_UART_Transmit(BL_UART,&response, 1, HAL_MAX_DELAY);
+		/*Receive & Check Header**/
+		HAL_UART_Receive(BL_UART, &header, 1, 1000);
+	}
+	return header;
+}
 
 
 XMODEM_StatusTypedef xmodem_receive(UART_HandleTypeDef *BL_UART){
 
 	uint8_t rxbuf[1050]={0};
-	uint8_t header,packet_number=0,size[2],received_crc,response;
+	uint8_t header,size[2],received_crc,response;
 	uint16_t actual_size;
-
-	/*Receive & Check Header**/
-	HAL_UART_Receive(BL_UART, &header, 1, HAL_MAX_DELAY);
+	static uint8_t packet_number=0;
+	if(packet_number==0)
+		header=xmodem_ready_to_receive(BL_UART);
+	else
+		HAL_UART_Receive(BL_UART, &header, 1, HAL_MAX_DELAY);
 
 	switch(header)
 	 {
@@ -61,20 +72,20 @@ XMODEM_StatusTypedef xmodem_receive(UART_HandleTypeDef *BL_UART){
 		 	 /*receive DATA*/
 		 	 HAL_UART_Receive(BL_UART, rxbuf, actual_size, HAL_MAX_DELAY);
 		 	 /*receive CRC*/
-		 	 HAL_UART_Receive(huart5, &received_crc, 1, HAL_MAX_DELAY);
+		 	 HAL_UART_Receive(BL_UART, &received_crc, 1, HAL_MAX_DELAY);
 
 		 	uint8_t calculated_crc = xmodem_calcrc(rxbuf, actual_size);
 		 	 if(calculated_crc != received_crc){
 		 		 //send NAK
 		 		 response=NAK;
-		 		 HAL_UART_Transmit(huart5, &response, 1, HAL_MAX_DELAY);
+		 		 HAL_UART_Transmit(BL_UART, &response, 1, HAL_MAX_DELAY);
 		 		 return XMODEM_ERROR;
 		 	 }
 		 	 else
 		 	 {
 		 		//send NAK
 		 		response=ACK;
-		 		HAL_UART_Transmit(huart5, &response, 1, HAL_MAX_DELAY);
+		 		HAL_UART_Transmit(BL_UART, &response, 1, HAL_MAX_DELAY);
 		 	 }
 		 	 /*flash memory*/
 		 	 bootloader_write_bin_to_memory(rxbuf,actual_size);
@@ -89,6 +100,8 @@ XMODEM_StatusTypedef xmodem_receive(UART_HandleTypeDef *BL_UART){
 		 	break;
 
 	 case EOT:
+		 bootloader_update_signature_app_version(huart5);
+		 bootloader_update_signature_set_flag(huart5);
 		 /*Receive of EOT will jump to user app*/
 #ifdef DEBUG_XMODEM
 		 HAL_UART_Transmit(BL_UART, "Jump to user", 15, HAL_MAX_DELAY);
