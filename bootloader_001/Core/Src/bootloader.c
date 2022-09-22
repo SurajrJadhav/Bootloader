@@ -79,20 +79,14 @@ BL_StatusTypedef bootloader_write_bin_to_memory(uint8_t *rxbuf ,int size)
 	return BL_OK;
 }
 BL_StatusTypedef bootloader_flash_erase_signature_area(){
-	uint32_t SectorError;
-	FLASH_EraseInitTypeDef EraseSectorInfo;
 
-	/*Initialise flash parameters*/
-	EraseSectorInfo.Sector=FLASH_SECTOR_3;
-	EraseSectorInfo.NbSectors=1;
-	EraseSectorInfo.VoltageRange=FLASH_VOLTAGE_RANGE_3;
-	EraseSectorInfo.TypeErase=FLASH_TYPEERASE_SECTORS;
+
 
 	/*erase flash*/
 	HAL_FLASH_Unlock();
-	if(HAL_FLASHEx_Erase(&EraseSectorInfo,&SectorError)!=HAL_OK){
-		return BL_ERROR;
-	}
+
+	FLASH_Erase_Sector(FLASH_SECTOR_3,FLASH_VOLTAGE_RANGE_3);
+
 	HAL_FLASH_Lock();
 
 	return BL_OK;
@@ -152,8 +146,11 @@ BL_StatusTypedef bootloader_update_signature_set_flag(UART_HandleTypeDef*BL_UART
 	bl_sig_t temp;
 	memcpy(&temp,FLASH_SIGNATURE_AREA,sizeof(bl_sig_t));
 	temp.update_flag=1;
+	bootloader_flash_erase_signature_area();
+	memcpy(FLASH_SIGNATURE_AREA,&temp,sizeof(bl_sig_t));
+
 	/*update signature*/
-	bootloader_signature_update(&temp);
+//	bootloader_signature_update(&temp);
 
 	bootloader_lock_flash();
 }
@@ -165,7 +162,9 @@ BL_StatusTypedef bootloader_update_signature_reset_flag(UART_HandleTypeDef*BL_UA
 	memcpy(&temp,FLASH_SIGNATURE_AREA,sizeof(bl_sig_t));
 	temp.update_flag=0;
 	/*update signature*/
-	bootloader_signature_update(&temp);
+	bootloader_flash_erase_signature_area();
+	memcpy(FLASH_SIGNATURE_AREA,&temp,sizeof(bl_sig_t));
+//	bootloader_signature_update(&temp);
 
 	bootloader_lock_flash();
 }
@@ -177,8 +176,10 @@ BL_StatusTypedef bootloader_update_signature_app_version(UART_HandleTypeDef*BL_U
 	memcpy(&temp,FLASH_SIGNATURE_AREA,sizeof(bl_sig_t));
 	temp.app_version+=0.1;
 
+	bootloader_flash_erase_signature_area();
+	memcpy(FLASH_SIGNATURE_AREA,&temp,sizeof(bl_sig_t));
 	/*update signature*/
-	bootloader_signature_update(&temp);
+//	bootloader_signature_update(&temp);
 
 	bootloader_lock_flash();
 }
@@ -190,8 +191,11 @@ BL_StatusTypedef bootloader_update_signature_bl_version(UART_HandleTypeDef*BL_UA
 	memcpy(&temp,FLASH_SIGNATURE_AREA,sizeof(bl_sig_t));
 	temp.bl_version+=0.1;
 
+	bootloader_flash_erase_signature_area();
+	memcpy(FLASH_SIGNATURE_AREA,&temp,sizeof(bl_sig_t));
+
 	/*update signature*/
-	bootloader_signature_update(&temp);
+//	bootloader_signature_update(&temp);
 
 	bootloader_lock_flash();
 }
@@ -236,15 +240,8 @@ BL_StatusTypedef  bootloader_signature_update(bl_sig_t *sigdata){
 
 	/*UNLOCK flash for operation*/
 	bootloader_unlock_flash();
-
-	uint32_t address=FLASH_SIGNATURE_AREA;
-	uint8_t *data = (uint8_t*)sigdata;
-	/*erase sector to update*/
 	bootloader_flash_erase_signature_area();
-
-	/*copy content to signature area*/
 	memcpy(FLASH_SIGNATURE_AREA,sigdata,sizeof(bl_sig_t));
-
 	/*LOCK flash operation*/
 	bootloader_lock_flash();
 

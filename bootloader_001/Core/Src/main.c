@@ -66,7 +66,11 @@ static void MX_UART5_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+//	bootloader_unlock_flash();
+//	bootloader_flash_erase_signature_area();
+//	bl_sig_t temp={.app_version=1,.bl_version=1,.update_flag=1};
+//	memcpy(FLASH_SIGNATURE_AREA,&temp,sizeof(bl_sig_t));
+//	bootloader_lock_flash();
 	/* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
