@@ -10,32 +10,32 @@
 
 //#define UPDATE_OVER_UART
 
-BL_StatusTypedef bootloader_jump_to_user_code(UART_HandleTypeDef*BL_UART){
+BL_StatusTypedef bootloader_jump_to_user_code(UART_HandleTypeDef*puart){
 
-	if(bootloader_signature_get_reset_flag(BL_UART))
+	if(bootloader_signature_get_reset_flag(puart))
 	{
 
 #ifdef UPDATE_OVER_UART
 		uint8_t input;
-		HAL_UART_Transmit(huart5, "Update available press 'y' for update\n\r", 44, HAL_MAX_DELAY);
-		HAL_UART_Receive(huart5, &input, 1, BL_INPUT_TIMEOUT);
+		HAL_UART_Transmit(puart, "Update available press 'y' for update\n\r", 44, HAL_MAX_DELAY);
+		HAL_UART_Receive(puart, &input, 1, BL_INPUT_TIMEOUT);
 
 		if(input=='y' || input=='Y')
 		{
 			/*update application area*/
-			if(bootloader_app_update(BL_UART)==BL_OK){
+			if(bootloader_app_update(puart)==BL_OK){
 				/*change flag in signature area*/
 				bootloader_update_signature_reset_flag(huart5);
-				HAL_UART_Transmit(huart5, "Updated", strlen("Updated"), HAL_MAX_DELAY);
+				HAL_UART_Transmit(puart, "Updated", strlen("Updated"), HAL_MAX_DELAY);
 			}
 			else{
-				HAL_UART_Transmit(huart5, "Update Failed",strlen("Update Failed"), HAL_MAX_DELAY);
+				HAL_UART_Transmit(puart, "Update Failed",strlen("Update Failed"), HAL_MAX_DELAY);
 				return BL_ERROR;
 			}
 		}
 #else
 		uint8_t input;
-		HAL_UART_Transmit(huart5, "Update available press switch for update\n\r", 44, HAL_MAX_DELAY);
+		HAL_UART_Transmit(puart, "Update available press switch for update\n\r", 44, HAL_MAX_DELAY);
 
 		uint32_t lasttick= HAL_GetTick();
 
@@ -44,14 +44,14 @@ BL_StatusTypedef bootloader_jump_to_user_code(UART_HandleTypeDef*BL_UART){
 		if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)==SET)
 		{
 			/*update application area*/
-			if(bootloader_app_update(BL_UART)==BL_OK){
+			if(bootloader_app_update(puart)==BL_OK){
 				/*change flag in signature area*/
-				bootloader_update_signature_reset_flag(huart5);
-				HAL_UART_Transmit(huart5, "Updated\n", strlen("Updated"), HAL_MAX_DELAY);
+				bootloader_update_signature_reset_flag(puart);
+				HAL_UART_Transmit(puart, "Updated\n", strlen("Updated"), HAL_MAX_DELAY);
 				break;
 			}
 			else{
-				HAL_UART_Transmit(huart5, "Update Failed",strlen("Update Failed"), HAL_MAX_DELAY);
+				HAL_UART_Transmit(puart, "Update Failed",strlen("Update Failed"), HAL_MAX_DELAY);
 				return BL_ERROR;
 			}
 		}
@@ -80,7 +80,7 @@ BL_StatusTypedef bootloader_jump_to_user_code(UART_HandleTypeDef*BL_UART){
 
 /*********Bootloader Command Functions*****************************/
 
-BL_StatusTypedef bootloader_get_bl_version(UART_HandleTypeDef*BL_UART)
+BL_StatusTypedef bootloader_get_bl_version(UART_HandleTypeDef*puart)
 {
 
 }
@@ -167,11 +167,11 @@ BL_StatusTypedef bootloader_flash_erase_application_area(){
 	return BL_OK;
 }
 
-BL_StatusTypedef bootloader_read_memory(UART_HandleTypeDef*BL_UART){
+BL_StatusTypedef bootloader_read_memory(UART_HandleTypeDef*puart){
 
 }
 
-BL_StatusTypedef bootloader_update_signature_set_flag(UART_HandleTypeDef*BL_UART){
+BL_StatusTypedef bootloader_update_signature_set_flag(UART_HandleTypeDef*puart){
 
 	bootloader_unlock_flash();
 	/*update signature*/
@@ -185,7 +185,7 @@ BL_StatusTypedef bootloader_update_signature_set_flag(UART_HandleTypeDef*BL_UART
 	bootloader_lock_flash();
 }
 
-BL_StatusTypedef bootloader_update_signature_reset_flag(UART_HandleTypeDef*BL_UART){
+BL_StatusTypedef bootloader_update_signature_reset_flag(UART_HandleTypeDef*puart){
 
 	bootloader_unlock_flash();
 	/*update signature*/
@@ -197,7 +197,7 @@ BL_StatusTypedef bootloader_update_signature_reset_flag(UART_HandleTypeDef*BL_UA
 
 	bootloader_lock_flash();
 }
-BL_StatusTypedef bootloader_update_signature_app_version(UART_HandleTypeDef*BL_UART){
+BL_StatusTypedef bootloader_update_signature_app_version(UART_HandleTypeDef*puart){
 
 	bootloader_unlock_flash();
 	/*updated signature*/
@@ -210,7 +210,7 @@ BL_StatusTypedef bootloader_update_signature_app_version(UART_HandleTypeDef*BL_U
 
 	bootloader_lock_flash();
 }
-BL_StatusTypedef bootloader_update_signature_bl_version(UART_HandleTypeDef*BL_UART){
+BL_StatusTypedef bootloader_update_signature_bl_version(UART_HandleTypeDef*puart){
 
 	bootloader_unlock_flash();
 	/*update signature*/
@@ -225,7 +225,7 @@ BL_StatusTypedef bootloader_update_signature_bl_version(UART_HandleTypeDef*BL_UA
 	bootloader_lock_flash();
 }
 
-int bootloader_signature_get_reset_flag(UART_HandleTypeDef*BL_UART){
+int bootloader_signature_get_reset_flag(UART_HandleTypeDef*puart){
 
 	/*open flash for operation*/
 	bootloader_unlock_flash();
@@ -238,7 +238,7 @@ int bootloader_signature_get_reset_flag(UART_HandleTypeDef*BL_UART){
 }
 
 
-BL_StatusTypedef bootloader_app_update(UART_HandleTypeDef*BL_UART){
+BL_StatusTypedef bootloader_app_update(UART_HandleTypeDef*puart){
 
 	/*erase memory in order to write*/
 	bootloader_flash_erase_application_area();
