@@ -14,9 +14,9 @@
 /*
  * 		Packet Info
 *      +-----+-------+-------+------+-----+------+
-*      | SOH | PKT_num | Data_Size | data | SUM  |
+*      | SOH | PKT_num | ~PKT_num | data | CRC  |
 *      +-----+-------+-------+------+-----+------+
-*/
+*/ 	  1       1          1      xxx     1
 
 uint16_t xmodem_calcrc(unsigned char *ptr, int count)
 {
