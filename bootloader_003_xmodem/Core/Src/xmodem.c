@@ -8,9 +8,12 @@
 #include "xmodem.h"
 #include "bootloader.h"
 
+UART_HandleTypeDef huart4;
+
+
 #define SWAP_BYTE(x) (x=((x&0x00ff)<<8) | ((x&0xff00)>>8))
 
-//#define DEBUG_XMODEM
+#define DEBUG_XMODEM
 /*
  * 		Packet Info
 *      +-----+-------+-------+------+-----+------+
@@ -64,6 +67,8 @@ uint8_t xmodem_ready_to_receive_after_NAK(UART_HandleTypeDef *BL_UART){
 }
 
 XMODEM_StatusTypedef xmodem_receive(UART_HandleTypeDef *BL_UART){
+
+	HAL_UART_Transmit(&huart4, "in xmodem\n\r", strlen("in xmodem\n\r"), HAL_MAX_DELAY);
 
 	uint8_t rxbuf[1050]={0};
 	uint8_t header,response;
@@ -130,8 +135,8 @@ retry:
 #ifdef DEBUG_XMODEM
 		 	/*debug*/
 		 	char temp[12];
-		 	sprintf(temp,"send=%d\n\r",packet_number);
-		 	HAL_UART_Transmit(BL_UART, temp, strlen(temp), HAL_MAX_DELAY);
+		 	sprintf(temp,"packet=%d\n\r",packet_number);
+		 	HAL_UART_Transmit(&huart4, temp, strlen(temp), HAL_MAX_DELAY);
 	 		/*debug end*/
 #endif
 		 	break;
@@ -149,10 +154,10 @@ retry:
 
 		 /*Receive of EOT will jump to user app*/
 #ifdef DEBUG_XMODEM
-		 HAL_UART_Transmit(BL_UART, "Jump to user", 15, HAL_MAX_DELAY);
+		 HAL_UART_Transmit(&huart4, "Jump to user", 15, HAL_MAX_DELAY);
 #endif
 		 /*jump to APP */
-		 if(bootloader_jump_to_user_code(BL_UART) == BL_ERROR){
+		 if(bootloader_jump_to_user_code(&huart4) == BL_ERROR){
 			 HAL_UART_Transmit(BL_UART, "ERROR", strlen("ERROR"), HAL_MAX_DELAY);
 			 while(1);
 		 }

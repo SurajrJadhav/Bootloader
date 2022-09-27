@@ -36,9 +36,12 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define CMD_BUF_SIZE 200
+#define CMD_BUF_SIZE 20
+#define PRINT_MENU
 /* USER CODE END PM */
+
 /* Private variables ---------------------------------------------------------*/
+extern UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart5;
 
 /* USER CODE BEGIN PV */
@@ -50,6 +53,7 @@ uint8_t cmdBuf[CMD_BUF_SIZE];
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_UART5_Init(void);
+static void MX_UART4_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -71,12 +75,12 @@ int main(void)
 //	bl_sig_t temp={.app_version=1,.bl_version=1,.update_flag=1};
 //	memcpy(FLASH_SIGNATURE_AREA,&temp,sizeof(bl_sig_t));
 //	bootloader_lock_flash();
-	/* USER CODE END 1 */
+  /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-	HAL_Init();
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -92,6 +96,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_UART5_Init();
+  MX_UART4_Init();
   /* USER CODE BEGIN 2 */
 
   /*Enter Bootloader mode when User_button is pressed*/
@@ -99,7 +104,8 @@ int main(void)
 	  bootloader_mode();
   }
   else{
-	  bootloader_jump_to_user_code(&huart5);
+	  HAL_UART_Transmit(&huart4, "Jumped to APP\n\r", strlen("jumped to APP\n\r"),HAL_MAX_DELAY);
+	  bootloader_jump_to_user_code(&huart4);
   }
   /* USER CODE END 2 */
 
@@ -158,6 +164,39 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief UART4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_UART4_Init(void)
+{
+
+  /* USER CODE BEGIN UART4_Init 0 */
+
+  /* USER CODE END UART4_Init 0 */
+
+  /* USER CODE BEGIN UART4_Init 1 */
+
+  /* USER CODE END UART4_Init 1 */
+  huart4.Instance = UART4;
+  huart4.Init.BaudRate = 115200;
+  huart4.Init.WordLength = UART_WORDLENGTH_8B;
+  huart4.Init.StopBits = UART_STOPBITS_1;
+  huart4.Init.Parity = UART_PARITY_NONE;
+  huart4.Init.Mode = UART_MODE_TX_RX;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN UART4_Init 2 */
+
+  /* USER CODE END UART4_Init 2 */
+
+}
+
+/**
   * @brief UART5 Initialization Function
   * @param None
   * @retval None
@@ -203,6 +242,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
@@ -220,6 +260,14 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : PB6 PB7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 4 */
@@ -227,8 +275,9 @@ void bootloader_mode(){
 
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, SET);
 	/*Use UART5 for bootloader command*/
-	HAL_UART_Transmit(&huart5,(uint8_t*) "Welcome to bootloader\r\n", strlen("Welcome to bootloder\r\n"),HAL_MAX_DELAY );
-
+#ifdef PRINT_MENU
+	HAL_UART_Transmit(&huart4,"Welcome to bootloader\r\n", strlen("Welcome to bootloder\r\n"),HAL_MAX_DELAY );
+#endif
 	/*poll UART5 to read data*/
 	while(1)
 	{
@@ -245,7 +294,9 @@ void bootloader_mode(){
 			bootloader_jump_to_user_code(&huart5);
 			break;
 		case BL_WRITE_BIN_TO_MEMORY:
-			HAL_UART_Transmit(&huart5,(uint8_t*) "xmodem\n\r", strlen("xmodem\n\r"),HAL_MAX_DELAY );
+#ifdef PRINT_MENU
+			HAL_UART_Transmit(&huart4,(uint8_t*) "xmodem\n\r", strlen("xmodem\n\r"),HAL_MAX_DELAY );
+#endif
 
 			bootloader_flash_erase_download_area();
 			while(1){
