@@ -17,9 +17,9 @@ UART_HandleTypeDef huart4;
 /*
  * 		Packet Info
 *      +-----+-------+-------+------+-----+------+
-*      | SOH | PKT_num | ~PKT_num | data | CRC  |
+*      | SOH | PKT_num | Data_Size | data | SUM  |
 *      +-----+-------+-------+------+-----+------+
-*/ 	  1       1          1      xxx     1
+*/
 
 uint16_t xmodem_calcrc(unsigned char *ptr, int count)
 {
@@ -68,7 +68,7 @@ uint8_t xmodem_ready_to_receive_after_NAK(UART_HandleTypeDef *BL_UART){
 
 XMODEM_StatusTypedef xmodem_receive(UART_HandleTypeDef *BL_UART){
 
-	HAL_UART_Transmit(&huart4, "in xmodem\n\r", strlen("in xmodem\n\r"), HAL_MAX_DELAY);
+	HAL_UART_Transmit(&DEBUG_UART, "receiving packet...\n\r", strlen("receiving packet...\n\r"), HAL_MAX_DELAY);
 
 	uint8_t rxbuf[1050]={0};
 	uint8_t header,response;
@@ -135,8 +135,8 @@ retry:
 #ifdef DEBUG_XMODEM
 		 	/*debug*/
 		 	char temp[12];
-		 	sprintf(temp,"packet=%d\n\r",packet_number);
-		 	HAL_UART_Transmit(&huart4, temp, strlen(temp), HAL_MAX_DELAY);
+		 	sprintf(temp,"received packet=%d\n\r",packet_number);
+		 	HAL_UART_Transmit(&DEBUG_UART, temp, strlen(temp), HAL_MAX_DELAY);
 	 		/*debug end*/
 #endif
 		 	break;
@@ -158,7 +158,7 @@ retry:
 #endif
 		 /*jump to APP */
 		 if(bootloader_jump_to_user_code(&huart4) == BL_ERROR){
-			 HAL_UART_Transmit(BL_UART, "ERROR", strlen("ERROR"), HAL_MAX_DELAY);
+			 HAL_UART_Transmit(&DEBUG_UART, "ERROR", strlen("ERROR"), HAL_MAX_DELAY);
 			 while(1);
 		 }
 

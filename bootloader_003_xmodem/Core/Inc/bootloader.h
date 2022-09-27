@@ -11,7 +11,6 @@
 #include "stm32f4xx_hal.h"
 #include "bootloader.h"
 
-#define DEBUG_UART husart1
 
 typedef enum {
 	BL_OK,
@@ -66,14 +65,14 @@ BL_StatusTypedef bootloader_flash_varify(UART_HandleTypeDef*);
 
 BL_StatusTypedef bootloader_app_update(UART_HandleTypeDef*);
 
-BL_StatusTypedef bootloader_update_signature_set_flag(UART_HandleTypeDef*BL_UART);
-BL_StatusTypedef bootloader_update_signature_reset_flag(UART_HandleTypeDef*BL_UART);
-BL_StatusTypedef bootloader_update_signature_app_version(UART_HandleTypeDef*BL_UART);
-BL_StatusTypedef bootloader_update_signature_bl_version(UART_HandleTypeDef*BL_UART);
+BL_StatusTypedef bootloader_update_signature_set_flag(UART_HandleTypeDef*);
+BL_StatusTypedef bootloader_update_signature_reset_flag(UART_HandleTypeDef*);
+BL_StatusTypedef bootloader_update_signature_app_version(UART_HandleTypeDef*);
+BL_StatusTypedef bootloader_update_signature_bl_version(UART_HandleTypeDef*);
 BL_StatusTypedef bootloader_signature_update(bl_sig_t *sigdata);
-int bootloader_signature_get_reset_flag(UART_HandleTypeDef*BL_UART);
-float bootloader_signature_get_app_version(UART_HandleTypeDef*BL_UART);
-float bootloader_signature_get_bl_version(UART_HandleTypeDef*BL_UART);
+int bootloader_signature_get_reset_flag(UART_HandleTypeDef*);
+float bootloader_signature_get_app_version(UART_HandleTypeDef*);
+float bootloader_signature_get_bl_version(UART_HandleTypeDef*);
 
 BL_StatusTypedef bootloader_unlock_flash();
 BL_StatusTypedef bootloader_lock_flash();

@@ -8,6 +8,8 @@
 #ifndef INC_XMODEM_H_
 #define INC_XMODEM_H_
 
+#define DEBUG_UART huart4
+
 #include "stm32f4xx_hal.h"
 
 typedef enum{
