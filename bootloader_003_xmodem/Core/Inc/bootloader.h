@@ -11,6 +11,8 @@
 #include "stm32f4xx_hal.h"
 #include "bootloader.h"
 
+#define DEBUG_UART husart1
+
 typedef enum {
 	BL_OK,
 	BL_ERROR
