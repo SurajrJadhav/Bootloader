@@ -10,7 +10,6 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <FS.h>
-#include <EEPROM.h>
 
 //-----------------------------------------------------------------------------------------------------//
 //#define SERIAL_OUT
@@ -49,53 +48,54 @@ HTTPClient http; //must be declared after WiFiClient for correct destruction ord
 uint8_t data[1024];
 
 void setup() {
-  pinMode(0,INPUT);
-  pinMode(LED_BUILTIN,OUTPUT);
-  digitalWrite(LED_BUILTIN,HIGH);
-  //Serial1.begin(115200);  //for debug messages
+  pinMode(16,OUTPUT);
+  digitalWrite(16,HIGH);
+  Serial1.begin(115200);  //for debug messages
   Serial.begin(115200);   //for uart xmodem ftp
 
-  Serial.println();
-  Serial.println();
-  Serial.println();
+  Serial1.println();
+  Serial1.println();
+  Serial1.println();
   
-  if(!SPIFFS.begin()) Serial.printf("SPIFFS not found\n\r");
-  else Serial.printf("SPIFFS found\n\r");
+  if(!SPIFFS.begin()) Serial1.printf("SPIFFS not found\n\r");
+  else Serial1.printf("SPIFFS found\n\r");
   
-  Serial.printf("Conecting to wifi");
+  Serial1.printf("Conecting to wifi");
   WiFi.begin(ssid,password);
   
   while (WiFi.status() != WL_CONNECTED) {
-    Serial.printf(".");
+    Serial1.printf(".");
     delay(500);
   }
-  Serial.println("\n\rConnected to "+WiFi.SSID()+" Use IP address: "+WiFi.localIP().toString());
-  EEPROM.begin(512);
+  Serial1.println("\n\rConnected to "+WiFi.SSID()+" Use IP address: "+WiFi.localIP().toString());
 }
 
 void loop() {
     File current,newfile;
-    int sizeoffilenew, sizeoffilecurrent, httpCode, eeprom_add=0;
+    int sizeoffilenew, sizeoffilecurrent, httpCode;
+    unsigned long last_time;
+    bool update_flag=0;
     
-    http.begin(client, "http://192.168.43.191/share/BL_User_1.bin");
+    http.begin(client, "http://192.168.43.191/share/BL_User_2.bin");
     http.addHeader("Content-Type","application/octet-stream");
     httpCode = http.GET();
-    Serial.printf("http.get = %d\n\r",httpCode);
+    Serial1.printf("http.get = %d\n\r",httpCode);
     sizeoffilenew = http.getSize();
     
-    if (httpCode == HTTP_CODE_OK) {
+    if (httpCode == HTTP_CODE_OK) 
+    {
       current = SPIFFS.open("/current.bin","r+");
-      if(!current) Serial.printf("Error in opening current file\n\r");
+      if(!current) Serial1.printf("Error in opening current file\n\r");
       sizeoffilecurrent = current.size();
-      Serial.printf("size of new file=%d\n\r",sizeoffilenew);
-      Serial.printf("size of current file=%d\n\r",sizeoffilecurrent);
+      Serial1.printf("size of new file=%d\n\r",sizeoffilenew);
+      Serial1.printf("size of current file=%d\n\r",sizeoffilecurrent);
       
       if(sizeoffilenew!=sizeoffilecurrent)
       { 
         current = SPIFFS.open("/current.bin","w+");
         write_file(&client,current);
-        EEPROM.write(eeprom_add,1);  // update flag
-        Serial.printf("Size is different so instantly downloaded to current file\n\r");  
+        update_flag = 1;  // update flag
+        Serial1.printf("Size is different so instantly downloaded to current file\n\r");  
       }
 
       else
@@ -106,28 +106,40 @@ void loop() {
         if(file_cmp(current,newfile)!=0)
         {
           replace_file(current,newfile);
-          EEPROM.write(eeprom_add,1);  // update flag
-          Serial.printf("file same size but different contents so file replaced!!!\n\r");
+          update_flag = 1;  // update flag
+          Serial1.printf("file same size but different contents so file replaced!!!\n\r");
         }
         else  
         {
-          EEPROM.write(eeprom_add,0);  // update flag
-          Serial.printf("Same file so not replaced\n\r");
+          update_flag = 0;  // update flag
+          Serial1.printf("Same file so not replaced\n\r");
         }
         newfile.close();
-        Serial.printf("newfile deleted: %d\n\r",SPIFFS.remove("/new.bin"));
+        Serial1.printf("newfile deleted: %d\n\r",SPIFFS.remove("/new.bin"));
       }
-  
-    if(EEPROM.read(eeprom_add))   Serial.printf("Update available\n\r");
-    else    Serial.printf("Update not available\n\r");
-    }
+
+      if(update_flag)   Serial1.println("Update available...");
+      else    Serial1.println("Update not available...");
+
+      while(update_flag)
+      {
+        digitalWrite(16,LOW);
+        wdt_reset();
+        if(Serial.read()==ACK)
+        {
+            Serial1.println("Target ready to take update");
+            Serial.write(ACK);
+            delay(1000);
+            send_file(current);
+            break;
+        }
+      }
+      digitalWrite(16,HIGH);
+      if(!update_flag && (Serial.read()==ACK))  Serial.write(NAK);
+      
+      current.close(); 
+    } 
     http.end();
-    current.seek(0,SeekSet);
-    digitalWrite(LED_BUILTIN,LOW);
-    while(digitalRead(0) != LOW)    wdt_reset();
-    send_file(current);
-    digitalWrite(LED_BUILTIN,HIGH);
-    current.close();
 }
 
 int file_cmp(File current, File newfile)
@@ -229,7 +241,8 @@ void xmodem_wait_for_send(){
 
 void send_file(File current)
 {
-  Serial.print("1");
+  Serial1.println("Sending file!!!");
+  //Serial.print("1");
 //  delay(1000);
   uint8_t _packet_num=1,_header, EOT_flag=0,response=0;
   uint16_t crc;
@@ -247,10 +260,10 @@ void send_file(File current)
 
     crc = xmodem_calcrc(data, _size);
 
-#ifndef SERIAL_OUT    
+//#ifndef SERIAL_OUT    
     //send header
     Serial.write(_header);
-    delay(1000);
+    delay(100);
     //send packet number;
     Serial.write(_packet_num);
     //send !(packet number)
@@ -259,21 +272,22 @@ void send_file(File current)
     Serial.write(data,_size);
     Serial.write(crc);
 
-#else
+//#else
     
-  Serial.printf("%c %d %d ",_header,_packet_num,~_packet_num);
+  Serial1.printf("%c %d %d ",_header,_packet_num,~_packet_num);
   for(int i=0;i<1024;i++)
-  Serial.printf("%02X ",data[i]);
-  Serial.printf("%04X\n\r",crc);
-  Serial.println("Enter ACK");
-#endif          //---------------------------------------------------------------------------------
-
+  Serial1.printf("%02X ",data[i]);
+  Serial1.printf("%04X\n\r",crc);
+  //Serial1.println("Enter ACK");
+//#endif          //---------------------------------------------------------------------------------
     while(response!=ACK){
       response=Serial.read();
       wdt_reset();
-    }  
+    }
+    if(response==NAK)  Serial.println("NACK by target....transmitting again");  
     if(response==ACK)
-    {
+    { 
+      Serial1.println("ACK by target");
       _packet_num++;
       response=0;     
     }
@@ -283,9 +297,9 @@ void send_file(File current)
 
   //EOT of file//
   uint8_t end_tx=EOT;
-#ifndef SERIAL_OUT  
+//#ifndef SERIAL_OUT  
   Serial.write(end_tx);
-#endif
-  Serial.println("transmit completed!!!!");
+//#endif
+  Serial1.println("transmit completed!!!!\n\r");
 }
 //--------------------------------------------------------------------------------------------------------//
