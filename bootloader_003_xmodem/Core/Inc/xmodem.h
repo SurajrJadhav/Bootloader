@@ -8,9 +8,7 @@
 #ifndef INC_XMODEM_H_
 #define INC_XMODEM_H_
 
-#define DEBUG_UART huart4
-
-#include "stm32f4xx_hal.h"
+#include"main.h"
 
 typedef enum{
 	XMODEM_OK,
@@ -31,6 +29,7 @@ typedef enum{
 #define PKT_SIZE_1K 1024
 
 #define XMODEM_RX_WAIT_TIME 3000U
+
 
 /*API used for xmodem*/
 XMODEM_StatusTypedef xmodem_receive(UART_HandleTypeDef *BL_UART);

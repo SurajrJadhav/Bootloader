@@ -8,9 +8,7 @@
 #ifndef INC_BOOTLOADER_H_
 #define INC_BOOTLOADER_H_
 
-#include "stm32f4xx_hal.h"
-#include "bootloader.h"
-
+#include"main.h"
 
 typedef enum {
 	BL_OK,
@@ -56,7 +54,7 @@ BL_StatusTypedef bootloader_jump_to_user_code(UART_HandleTypeDef*);
 BL_StatusTypedef bootloader_get_bl_version(UART_HandleTypeDef*);
 BL_StatusTypedef bootloader_write_bin_to_memory(uint8_t *,int );
 BL_StatusTypedef bootloader_read_memory_sector(UART_HandleTypeDef*);
-
+/*bootloader flash API*/
 BL_StatusTypedef bootloader_flash_erase_all(UART_HandleTypeDef*);
 BL_StatusTypedef bootloader_flash_erase_download_area();
 BL_StatusTypedef bootloader_flash_erase_application_area();
@@ -64,7 +62,7 @@ BL_StatusTypedef bootloader_flash_erase_signature_area();
 BL_StatusTypedef bootloader_flash_varify(UART_HandleTypeDef*);
 
 BL_StatusTypedef bootloader_app_update(UART_HandleTypeDef*);
-
+/*API used for signature area*/
 BL_StatusTypedef bootloader_update_signature_set_flag(UART_HandleTypeDef*);
 BL_StatusTypedef bootloader_update_signature_reset_flag(UART_HandleTypeDef*);
 BL_StatusTypedef bootloader_update_signature_app_version(UART_HandleTypeDef*);

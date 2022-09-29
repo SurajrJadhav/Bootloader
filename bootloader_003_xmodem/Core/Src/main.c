@@ -42,8 +42,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-extern UART_HandleTypeDef huart4;
-UART_HandleTypeDef huart5;
+extern UART_HandleTypeDef huart4;//debug UART
+UART_HandleTypeDef huart5;		//xmodem UART
 
 /* USER CODE BEGIN PV */
 uint8_t cmdBuf[CMD_BUF_SIZE];
@@ -106,29 +106,31 @@ int main(void)
   }
   else{
 	  uint8_t send=ACK,receive=0;
-	  int last_tick=HAL_GetTick();
-	  HAL_UART_Transmit(&DEBUG_UART, "checking Update\n\r", strlen("checking Update\n\r"),HAL_MAX_DELAY);
+	  HAL_UART_Transmit(&huart4, "checking Update\n\r", strlen("checking Update\n\r"),HAL_MAX_DELAY);
+
+	  /*wait for reception of ACK or NAK*/
 	  while(HAL_UART_Receive(&huart5, &receive, 1, 1000)!=HAL_OK){
 		  //send ACK
 		  HAL_UART_Transmit(&huart5,&send, 1, HAL_MAX_DELAY);
 	  }
+
 	  if(receive==ACK)
 	  {
 		  //update available
-		  HAL_UART_Transmit(&DEBUG_UART, "Downloading Update\n\r", strlen("Downloading Update\n\r"),HAL_MAX_DELAY);
-		  //erase download area
+		  HAL_UART_Transmit(&huart4, "Downloading Update\n\r", strlen("Downloading Update\n\r"),HAL_MAX_DELAY);
+		  /*erase download area*/
 		  bootloader_flash_erase_download_area();
-		  //receive file
+		  /*receive file using xmodem*/
 		  while(xmodem_receive(&huart5)!=XMODEM_ERROR);
-		  HAL_UART_Transmit(&DEBUG_UART, "Downloading Update\n\r", strlen("Downloading failed\n\r"),HAL_MAX_DELAY);
+		  /*if any error happens in xmodem*/
+		  HAL_UART_Transmit(&huart4, "Downloading Update\n\r", strlen("Downloading failed\n\r"),HAL_MAX_DELAY);
 
 	  }
 	  else
 	  {
 	  //if received NAK
-	  HAL_UART_Transmit(&DEBUG_UART, "Update NOT available\n\r", strlen("Update NOT available\n\r"),HAL_MAX_DELAY);
-	  HAL_UART_Transmit(&DEBUG_UART, "Jumped to APP\n\r", strlen("jumped to APP\n\r"),HAL_MAX_DELAY);
-	  bootloader_jump_to_user_code(&DEBUG_UART);
+	  HAL_UART_Transmit(&huart4, "Update NOT available\n\r", strlen("Update NOT available\n\r"),HAL_MAX_DELAY);
+	  bootloader_jump_to_user_code(&huart4);
 	  }
 }
   /* USER CODE END 2 */
@@ -300,7 +302,10 @@ void bootloader_mode(){
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, SET);
 	/*Use UART5 for bootloader command*/
 #ifdef PRINT_MENU
-	HAL_UART_Transmit(&DEBUG_UART,"Welcome to bootloader\r\n", strlen("Welcome to bootloder\r\n"),HAL_MAX_DELAY );
+	HAL_UART_Transmit(&huart4,"Welcome to bootloader\r\n", strlen("Welcome to bootloder\r\n"),HAL_MAX_DELAY );
+	HAL_UART_Transmit(&huart4,"0 BL_JMP_TO_USER_CODE\r\n", strlen("0 BL_JMP_TO_USER_CODE\r\n"),HAL_MAX_DELAY );
+	HAL_UART_Transmit(&huart4,"1 BL_WRITE_BIN_TO_MEMORY\r\n", strlen("1 BL_WRITE_BIN_TO_MEMORY\r\n"),HAL_MAX_DELAY );
+	HAL_UART_Transmit(&huart4,"2 BL_GET_VERSION\r\n", strlen("2 BL_GET_VERSION\r\n"),HAL_MAX_DELAY );
 #endif
 	/*poll UART5 to read data*/
 	while(1)
@@ -315,26 +320,41 @@ void bootloader_mode(){
 			bootloader_get_bl_version(&huart5);
 			break;
 		case BL_JMP_TO_USER_CODE:
-			bootloader_jump_to_user_code(&huart5);
+			bootloader_jump_to_user_code(&huart4);
 			break;
 		case BL_WRITE_BIN_TO_MEMORY:
 #ifdef PRINT_MENU
-			HAL_UART_Transmit(&DEBUG_UART,(uint8_t*) "xmodem\n\r", strlen("xmodem\n\r"),HAL_MAX_DELAY );
+			HAL_UART_Transmit(&huart4,(uint8_t*) "xmodem mode\n\r", strlen("xmodem mode\n\r"),HAL_MAX_DELAY );
 #endif
 			bootloader_flash_erase_download_area();
 			while(1){
 				if(xmodem_receive(&huart5)==XMODEM_ERROR){
-					HAL_UART_Transmit(&DEBUG_UART, "ERROR", strlen("ERROR"), HAL_MAX_DELAY);
+					HAL_UART_Transmit(&huart4, "ERROR", strlen("ERROR"), HAL_MAX_DELAY);
 					while(1);
 				}
 			}
 			break;
 		default:
-			HAL_UART_Transmit(&DEBUG_UART, "Invalid cmd\n\r", strlen("Invalid cmd\n\r"), HAL_MAX_DELAY);
+			HAL_UART_Transmit(&huart4, "Invalid cmd\n\r", strlen("Invalid cmd\n\r"), HAL_MAX_DELAY);
 		}
 	}
 }
 
+
+void glow_all_led(){
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, SET);
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, SET);
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, SET);
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, SET);
+
+}
+void reset_all_led(){
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, RESET);
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, RESET);
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, RESET);
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, RESET);
+
+}
 /* USER CODE END 4 */
 
 /**

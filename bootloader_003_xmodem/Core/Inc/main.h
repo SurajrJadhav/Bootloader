@@ -31,7 +31,8 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "bootloader.h"
+#include "xmodem.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
